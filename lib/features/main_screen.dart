@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 
 // 각 화면들을 import
 import 'home/home_screen.dart';
-import 'search/search_screen.dart';
+import 'map/map_screen.dart';
 
 // MainScreen: 하단 네비게이션 바가 있는 메인 화면
 // StatefulWidget: 상태가 변할 수 있는 위젯 (현재 선택된 탭이 변경됨)
@@ -16,14 +16,14 @@ class MainScreen extends StatefulWidget {
 
 // _MainScreenState: MainScreen의 상태를 관리하는 클래스
 class _MainScreenState extends State<MainScreen> {
-  // _currentIndex: 현재 선택된 탭의 인덱스 (0: Home, 1: Search, 2: Profile)
+  // _currentIndex: 현재 선택된 탭의 인덱스 (0: Home, 1: Map, 2: My)
   int _currentIndex = 0;
 
   // _pages: 각 탭에 표시될 화면들의 리스트
   final List<Widget> _pages = [
     const HomeScreen(), // 0번 인덱스: 홈 화면
-    const SearchScreen(), // 1번 인덱스: 검색 화면
-    const Center(child: Text('Profile')), // 2번 인덱스: 프로필 화면 (임시)
+    const MapScreen(), // 1번 인덱스: 지도 화면
+    const Center(child: Text('My Page')), // 2번 인덱스: 마이 페이지
   ];
 
   @override
@@ -50,17 +50,17 @@ class _MainScreenState extends State<MainScreen> {
             selectedIcon: Icon(Icons.home), // 선택되었을 때 아이콘 (채워진 형태)
             label: 'Home', // 탭 라벨
           ),
-          // 두 번째 탭: Search
+          // 두 번째 탭: Map
           NavigationDestination(
-            icon: Icon(Icons.search_outlined),
-            selectedIcon: Icon(Icons.search),
-            label: 'Search',
+            icon: Icon(Icons.map_outlined),
+            selectedIcon: Icon(Icons.map),
+            label: 'Map',
           ),
-          // 세 번째 탭: Profile
+          // 세 번째 탭: My
           NavigationDestination(
             icon: Icon(Icons.person_outline),
             selectedIcon: Icon(Icons.person),
-            label: 'Profile',
+            label: 'My',
           ),
         ],
       ),
