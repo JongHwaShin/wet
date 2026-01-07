@@ -63,31 +63,6 @@ class RestaurantCard extends StatelessWidget {
                     ),
                   ),
                 ),
-                Positioned(
-                  bottom: 12,
-                  left: 12,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.access_time_filled, size: 14, color: Colors.black87),
-                        const SizedBox(width: 4),
-                        Text(
-                          '20-30 분',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.grey.shade800,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
               ],
             ),
           ),
@@ -96,65 +71,23 @@ class RestaurantCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        restaurant['place_name'] ?? '가게 이름 없음',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    const Row(
-                      children: [
-                        Icon(Icons.star, size: 16, color: Color(0xFFFFCA28)),
-                        SizedBox(width: 4),
-                        Text(
-                          '4.8', // Mock rating
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFFFFCA28),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+                Text(
+                  restaurant['name'] ?? '가게 이름 없음',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  restaurant['category_name']?.split('>').last.trim() ?? '카테고리 없음',
+                  restaurant['category']?.split('>').last.trim() ?? '카테고리 없음',
                   style: TextStyle(
                     fontSize: 13,
                     color: Colors.grey.shade500,
                   ),
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                     Text(
-                      '배달팁',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Colors.grey.shade500,
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    const Text(
-                      '무료',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFFEA1D2C),
-                      ),
-                    ),
-                  ],
                 ),
               ],
             ),

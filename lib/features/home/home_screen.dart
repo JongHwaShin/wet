@@ -52,14 +52,14 @@ class _HomeScreenState extends State<HomeScreen> {
 
     try {
       final url = Uri.parse(
-          'http://localhost:8080/api/restaurants/search?address=$_selectedAddress'); // Use logic for IP if needed
+          'http://localhost:8080/api/restaurants/recommendation?address=$_selectedAddress'); 
       
       final response = await http.get(url);
 
       if (response.statusCode == 200) {
-        final data = json.decode(utf8.decode(response.bodyBytes));
+        final List<dynamic> data = json.decode(utf8.decode(response.bodyBytes));
         setState(() {
-          _restaurants = data['documents'] ?? [];
+          _restaurants = data;
         });
       } else {
          // Mock data for UI testing if server fails or returns empty
