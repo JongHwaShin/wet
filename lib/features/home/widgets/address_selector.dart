@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../data/korea_administrative_divisions.dart';
 
 class AddressSelector extends StatefulWidget {
   final Function(String) onAddressChanged;
@@ -10,31 +11,31 @@ class AddressSelector extends StatefulWidget {
 }
 
 class _AddressSelectorState extends State<AddressSelector> {
-  final Map<String, List<String>> _koreaAddressData = {
-    '서울시': ['강남구', '강동구', '강북구', '강서구', '관악구', '광진구', '구로구', '금천구', '노원구', '도봉구', '동대문구', '동작구', '마포구', '서대문구', '서초구', '성동구', '성북구', '송파구', '양천구', '영등포구', '용산구', '은평구', '종로구', '중구', '중랑구'],
-    '경기도': ['수원시', '성남시', '고양시', '용인시', '부천시', '안산시', '안양시', '남양주시', '화성시', '평택시', '의정부시', '시흥시', '파주시', '광명시', '김포시', '군포시', '광주시', '이천시', '양주시', '오산시', '구리시', '안성시', '포천시', '의왕시', '하남시', '여주시', '양평군', '동두천시', '과천시', '가평군', '연천군'],
-    '인천시': ['중구', '동구', '미추홀구', '연수구', '남동구', '부평구', '계양구', '서구', '강화군', '옹진군'],
-    '부산시': ['중구', '서구', '동구', '영도구', '부산진구', '동래구', '남구', '북구', '해운대구', '사하구', '금정구', '강서구', '연제구', '수영구', '사상구', '기장군'],
-    '대구시': ['중구', '동구', '서구', '남구', '북구', '수성구', '달서구', '달성군', '군위군'],
-    '광주시': ['동구', '서구', '남구', '북구', '광산구'],
-    '대전시': ['동구', '중구', '서구', '유성구', '대덕구'],
-    '울산시': ['중구', '남구', '동구', '북구', '울주군'],
-    '세종시': ['세종시'],
-  };
-
   String _selectedProvince = '서울시';
   String _selectedDistrict = '강남구';
 
-  void _onProvinceChanged(String? newValue) {
-    if (newValue == null) return;
+  @override
+  void initState() {
+    super.initState();
+    // Initialize with first available data if defaults don't exist
+    if (!koreaAdministrativeDivisions.containsKey(_selectedProvince)) {
+      _selectedProvince = koreaAdministrativeDivisions.keys.first;
+    }
+    final districts = koreaAdministrativeDivisions[_selectedProvince] ?? [];
+    if (!districts.contains(_selectedDistrict)) {
+      _selectedDistrict = districts.isNotEmpty ? districts.first : '';
+    }
+  }
+
+  void _onProvinceChanged(String newValue) {
     setState(() {
       _selectedProvince = newValue;
-      _selectedDistrict = _koreaAddressData[newValue]!.first;
+      final districts = koreaAdministrativeDivisions[newValue] ?? [];
+      _selectedDistrict = districts.isNotEmpty ? districts.first : '';
     });
   }
 
-  void _onDistrictChanged(String? newValue) {
-    if (newValue == null) return;
+  void _onDistrictChanged(String newValue) {
     setState(() {
       _selectedDistrict = newValue;
     });
@@ -48,7 +49,6 @@ class _AddressSelectorState extends State<AddressSelector> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.only(left: 20, right: 20, top: 20, bottom: 40),
       decoration: const BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.only(
@@ -57,9 +57,9 @@ class _AddressSelectorState extends State<AddressSelector> {
         ),
       ),
       child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          const SizedBox(height: 16),
+          // Handle bar
           Center(
             child: Container(
               width: 40,
@@ -70,109 +70,154 @@ class _AddressSelectorState extends State<AddressSelector> {
               ),
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
+          // Title
           const Text(
             '주소를 선택해주세요',
             style: TextStyle(
-              fontSize: 20,
+              fontSize: 18,
               fontWeight: FontWeight.bold,
               color: Colors.black87,
             ),
-            textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 24),
-          Row(
-            children: [
-              Expanded(
-                child: _buildDropdown(
-                  value: _selectedProvince,
-                  items: _koreaAddressData.keys.toList(),
-                  onChanged: _onProvinceChanged,
-                  hint: '시/도',
+          const SizedBox(height: 16),
+          // Divider
+          const Divider(height: 1, thickness: 1),
+          // 2-Pane Selection Area
+          Expanded(
+            child: Row(
+              children: [
+                // Left Pane: Provinces (Si/Do)
+                Expanded(
+                  flex: 1,
+                  child: Container(
+                    color: Colors.grey[100],
+                    child: ListView.builder(
+                      itemCount: koreaAdministrativeDivisions.keys.length,
+                      itemBuilder: (context, index) {
+                        final province =
+                            koreaAdministrativeDivisions.keys.elementAt(index);
+                        final isSelected = province == _selectedProvince;
+                        return InkWell(
+                          onTap: () => _onProvinceChanged(province),
+                          child: Container(
+                            color: isSelected ? Colors.white : Colors.grey[100],
+                            padding: const EdgeInsets.symmetric(
+                              vertical: 16,
+                              horizontal: 20,
+                            ),
+                            child: Text(
+                              province,
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: isSelected
+                                    ? FontWeight.bold
+                                    : FontWeight.normal,
+                                color: isSelected
+                                    ? Colors.black
+                                    : Colors.grey[600],
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildDropdown(
-                  value: _selectedDistrict,
-                  items: _koreaAddressData[_selectedProvince] ?? [],
-                  onChanged: _onDistrictChanged,
-                  hint: '시/구/군',
+                // Right Pane: Districts (Si/Gun/Gu)
+                Expanded(
+                  flex: 2,
+                  child: Container(
+                    color: Colors.white,
+                    child: ListView.builder(
+                      itemCount:
+                          (koreaAdministrativeDivisions[_selectedProvince] ?? [])
+                              .length,
+                      itemBuilder: (context, index) {
+                        final districts =
+                            koreaAdministrativeDivisions[_selectedProvince] ??
+                                [];
+                        final district = districts[index];
+                        final isSelected = district == _selectedDistrict;
+                        return InkWell(
+                          onTap: () => _onDistrictChanged(district),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              vertical: 16,
+                              horizontal: 24,
+                            ),
+                            child: Row(
+                              children: [
+                                Text(
+                                  district,
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: isSelected
+                                        ? FontWeight.bold
+                                        : FontWeight.normal,
+                                    color: isSelected
+                                        ? const Color(0xFFEA1D2C)
+                                        : Colors.black87,
+                                  ),
+                                ),
+                                if (isSelected) ...[
+                                  const Spacer(),
+                                  const Icon(
+                                    Icons.check,
+                                    color: Color(0xFFEA1D2C),
+                                    size: 20,
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 32),
-          ElevatedButton(
-            onPressed: _confirmSelection,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFEA1D2C), // Primary Red
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              elevation: 0,
+              ],
             ),
-            child: const Text(
-              '이 위치로 설정하기',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+          // Bottom Button Area
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    spreadRadius: 0,
+                    blurRadius: 10,
+                    offset: const Offset(0, -5),
+                  ),
+                ]
+            ),
+            child: SafeArea(
+              child: ElevatedButton(
+                onPressed: _confirmSelection,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFEA1D2C),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  elevation: 0,
+                  minimumSize: const Size(double.infinity, 50),
+                ),
+                child: const Text(
+                  '선택 완료',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
             ),
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildDropdown({
-    required String value,
-    required List<String> items,
-    required ValueChanged<String?> onChanged,
-    required String hint,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          hint,
-          style: const TextStyle(
-            fontSize: 12,
-            color: Colors.grey,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-          decoration: BoxDecoration(
-            color: Colors.grey.shade50,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.grey.shade200),
-          ),
-          child: DropdownButtonHideUnderline(
-            child: DropdownButton<String>(
-              value: value,
-              isExpanded: true,
-              icon: Icon(Icons.keyboard_arrow_down_rounded, color: Colors.grey.shade400),
-              borderRadius: BorderRadius.circular(12),
-              dropdownColor: Colors.white,
-              elevation: 2,
-              style: const TextStyle(
-                fontSize: 15,
-                color: Colors.black87,
-                fontWeight: FontWeight.w500,
-              ),
-              items: items.map<DropdownMenuItem<String>>((String item) {
-                return DropdownMenuItem<String>(
-                  value: item,
-                  child: Text(item),
-                );
-              }).toList(),
-              onChanged: onChanged,
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

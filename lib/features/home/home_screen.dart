@@ -6,6 +6,7 @@ import 'widgets/address_selector.dart';
 import 'widgets/category_list.dart';
 import 'widgets/promo_slider.dart';
 import 'widgets/restaurant_card.dart';
+import '../search/search_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -36,10 +37,13 @@ class _HomeScreenState extends State<HomeScreen> {
   void _showAddressSelector() {
     showModalBottomSheet(
       context: context,
-      isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => AddressSelector(
-        onAddressChanged: _updateAddress,
+      isScrollControlled: true,
+      builder: (context) => SizedBox(
+        height: MediaQuery.of(context).size.height * 0.75, // 75% of screen height
+        child: AddressSelector(
+          onAddressChanged: _updateAddress,
+        ),
       ),
     );
   }
@@ -52,7 +56,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     try {
       final url = Uri.parse(
-          'http://localhost:8080/api/restaurants/recommendation?address=$_selectedAddress'); 
+          'http://localhost:8080/api/restaurants/recommendation?address=$_selectedAddress&userId=1'); 
       
       final response = await http.get(url);
 
@@ -125,27 +129,35 @@ class _HomeScreenState extends State<HomeScreen> {
         slivers: [
           // 1. Search Bar
           SliverToBoxAdapter(
-            child: Container(
-              color: Colors.white,
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+            child: GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const SearchScreen()),
+                );
+              },
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade100,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.search, color: Color(0xFFEA1D2C)),
-                    const SizedBox(width: 12),
-                    Text(
-                      '어떤 음식이 먹고 싶으세요?',
-                      style: TextStyle(
-                        color: Colors.grey.shade500,
-                        fontSize: 15,
+                color: Colors.white,
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.search, color: Color(0xFFEA1D2C)),
+                      const SizedBox(width: 12),
+                      Text(
+                        '어떤 음식이 먹고 싶으세요?',
+                        style: TextStyle(
+                          color: Colors.grey.shade500,
+                          fontSize: 15,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),

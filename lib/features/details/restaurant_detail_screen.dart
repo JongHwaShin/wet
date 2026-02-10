@@ -1,103 +1,231 @@
-// Flutter의 Material 디자인 위젯들을 사용하기 위한 import
 import 'package:flutter/material.dart';
+import 'package:webview_flutter/webview_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter/services.dart';
 
-// RestaurantDetailScreen: 레스토랑 상세 정보를 보여주는 화면
-// StatelessWidget: 전달받은 레스토랑 정보를 표시만 하므로 상태 변경이 없음
-class RestaurantDetailScreen extends StatelessWidget {
-  // restaurant: 이전 화면에서 전달받은 레스토랑 정보
+class RestaurantDetailScreen extends StatefulWidget {
   final Map<String, dynamic> restaurant;
 
-  // required: 필수 매개변수 (레스토랑 정보 없이는 화면을 만들 수 없음)
   const RestaurantDetailScreen({super.key, required this.restaurant});
 
   @override
+  State<RestaurantDetailScreen> createState() => _RestaurantDetailScreenState();
+}
+
+class _RestaurantDetailScreenState extends State<RestaurantDetailScreen> {
+  late final WebViewController _controller;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    final String url = widget.restaurant['placeUrl'] ?? 'https://map.kakao.com';
+
+    _controller = WebViewController()
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..setBackgroundColor(const Color(0x00000000))
+      ..setNavigationDelegate(
+        NavigationDelegate(
+          onPageStarted: (String url) {
+            setState(() {
+              _isLoading = true;
+            });
+          },
+          onPageFinished: (String url) {
+            setState(() {
+              _isLoading = false;
+            });
+          },
+          onWebResourceError: (WebResourceError error) {},
+          onNavigationRequest: (NavigationRequest request) {
+            return NavigationDecision.navigate;
+          },
+        ),
+      )
+      ..loadRequest(Uri.parse(url));
+  }
+
+  Future<void> _makePhoneCall(String phoneNumber) async {
+    final Uri launchUri = Uri(
+      scheme: 'tel',
+      path: phoneNumber.replaceAll('-', ''), // Remove dashes
+    );
+    if (await canLaunchUrl(launchUri)) {
+      await launchUrl(launchUri);
+    } else {
+      // ignore: use_build_context_synchronously
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('전화 걸기 기능을 사용할 수 없습니다.')),
+      );
+    }
+  }
+
+  Future<void> _copyAddress(String address) async {
+    await Clipboard.setData(ClipboardData(text: address));
+    // ignore: use_build_context_synchronously
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('주소가 복사되었습니다.')),
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final String name = widget.restaurant['name'] ?? '알 수 없음';
+    final String category = widget.restaurant['category'] ?? '카테고리 없음';
+    final String address = widget.restaurant['roadAddress'] ?? widget.restaurant['address'] ?? '주소 없음';
+    final String phone = widget.restaurant['phone'] ?? '';
+
     return Scaffold(
-      // CustomScrollView: 복잡한 스크롤 효과를 만들 수 있는 위젯
+      backgroundColor: Colors.white,
       body: CustomScrollView(
-        // slivers: 스크롤 가능한 영역들의 리스트
         slivers: [
-          // SliverAppBar: 스크롤 시 크기가 변하는 앱바
           SliverAppBar(
-            expandedHeight: 250.0, // 확장되었을 때 높이
-            floating: false, // 스크롤 내릴 때 앱바가 바로 나타나지 않음
-            pinned: true, // 스크롤해도 앱바가 상단에 고정됨
-            // FlexibleSpaceBar: 확장/축소되는 영역
+            pinned: true,
+            expandedHeight: 200.0,
+            backgroundColor: Colors.white,
+            foregroundColor: Colors.black,
             flexibleSpace: FlexibleSpaceBar(
-              title: Text(restaurant['name']), // 레스토랑 이름
-              // background: 확장되었을 때 배경에 표시될 위젯
-              background: Container(
-                color: Theme.of(context).colorScheme.primaryContainer, // 배경색
-                child: Center(
-                  // 레스토랑 이모지를 크게 표시
-                  child: Text(
-                    restaurant['image'],
-                    style: const TextStyle(fontSize: 80),
-                  ),
-                ),
-              ),
-            ),
-          ),
-          // SliverToBoxAdapter: 일반 위젯을 Sliver로 변환
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0), // 전체 여백
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start, // 왼쪽 정렬
+              background: Stack(
+                fit: StackFit.expand,
                 children: [
-                  // 카테고리와 평점을 가로로 배치
-                  Row(
-                    children: [
-                      // Chip: 작은 라벨 위젯
-                      Chip(
-                        label: Text(restaurant['category']), // 카테고리 이름
-                        backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+                  Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [Colors.grey.shade300, Colors.grey.shade400],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
                       ),
-                      const SizedBox(width: 8), // 8픽셀 간격
-                      const Icon(Icons.star, color: Colors.amber), // 별 아이콘
-                      const SizedBox(width: 4),
-                      // 평점 표시
-                      Text(
-                        restaurant['rating'].toString(),
-                        style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    child: const Center(
+                      child: Icon(Icons.store, size: 80, color: Colors.white),
+                    ),
+                  ),
+                  Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.transparent,
+                          Colors.black.withOpacity(0.5),
+                        ],
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  // "Description" 제목
-                  Text(
-                    'Description',
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  const SizedBox(height: 8),
-                  // 레스토랑 설명 (동적으로 카테고리 이름 포함)
-                  Text(
-                    'This is a delicious place serving the best ${restaurant['category']} in town. Come and enjoy a wonderful meal with your friends and family!',
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-                  const SizedBox(height: 24),
-                  // "Menu Highlights" 제목
-                  Text(
-                    'Menu Highlights',
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  const SizedBox(height: 8),
-                  // 메뉴 항목들 (이름과 가격)
-                  _buildMenuItem(context, 'Signature Dish', '\$12.99'),
-                  _buildMenuItem(context, 'Special Drink', '\$4.50'),
-                  _buildMenuItem(context, 'Dessert', '\$6.00'),
-                  const SizedBox(height: 32),
-                  // "Get Directions" 버튼 (화면 전체 너비)
-                  SizedBox(
-                    width: double.infinity, // 전체 너비
-                    child: FilledButton.icon(
-                      onPressed: () {}, // 버튼 클릭 시 실행할 함수
-                      icon: const Icon(Icons.map), // 지도 아이콘
-                      label: const Text('Get Directions'), // 버튼 텍스트
                     ),
                   ),
                 ],
               ),
+            ),
+          ),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Title Section
+                  Text(
+                    name,
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    category,
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  
+                  // Action Buttons Row
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      _buildActionButton(
+                        icon: Icons.call,
+                        label: '전화',
+                        onTap: phone.isNotEmpty ? () => _makePhoneCall(phone) : null,
+                        isActive: phone.isNotEmpty,
+                      ),
+                      _buildActionButton(
+                        icon: Icons.copy,
+                        label: '주소복사',
+                        onTap: () => _copyAddress(address),
+                        isActive: true,
+                      ),
+                       // Like button (Sync logic needed if we want it here too, omitting for now to keep simple or can add same logic as card)
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  const Divider(thickness: 8, color: Color(0xFFF5F6F8)),
+                  const SizedBox(height: 24),
+                  
+                  // Info Details
+                  _buildInfoRow(Icons.location_on, address),
+                  if (phone.isNotEmpty) ...[
+                    const SizedBox(height: 16),
+                    _buildInfoRow(Icons.phone, phone),
+                  ],
+                  const SizedBox(height: 24),
+                  const Divider(thickness: 1, color: Color(0xFFEEEEEE)),
+                  const SizedBox(height: 24),
+                 
+                  const Text(
+                    "상세 정보 (Kakao Map)",
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          // WebView Section
+          SliverFillRemaining(
+            hasScrollBody: true,
+            child: _isLoading 
+              ? const Center(child: CircularProgressIndicator())
+              : WebViewWidget(controller: _controller),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback? onTap,
+    required bool isActive,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: isActive ? Colors.blue.shade50 : Colors.grey.shade100,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              icon,
+              color: isActive ? Colors.blue : Colors.grey,
+              size: 24,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              color: isActive ? Colors.black87 : Colors.grey,
             ),
           ),
         ],
@@ -105,24 +233,23 @@ class RestaurantDetailScreen extends StatelessWidget {
     );
   }
 
-  // _buildMenuItem: 메뉴 항목을 표시하는 위젯 (이름과 가격)
-  Widget _buildMenuItem(BuildContext context, String name, String price) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0), // 위아래 여백 4픽셀
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween, // 양 끝에 배치
-        children: [
-          Text(name), // 메뉴 이름 (왼쪽)
-          // 가격 (오른쪽, 강조 색상)
-          Text(
-            price,
-            style: TextStyle(
-              fontWeight: FontWeight.bold, // 굵은 글씨
-              color: Theme.of(context).colorScheme.primary, // 기본 색상
+  Widget _buildInfoRow(IconData icon, String text) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 20, color: Colors.grey.shade600),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            text,
+            style: const TextStyle(
+              fontSize: 16,
+              color: Colors.black87,
+              height: 1.4,
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
